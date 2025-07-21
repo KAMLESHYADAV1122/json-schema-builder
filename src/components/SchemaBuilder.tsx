@@ -15,6 +15,7 @@ export interface SchemaField {
 interface SchemaBuilderProps {
   fields: SchemaField[];
   setFields: (fields: SchemaField[]) => void;
+  isRoot?: boolean;
 }
 
 // Default field object
@@ -79,18 +80,17 @@ const FieldRow = ({
         </button>
       </div>
 
-      {/* Recursive call for nested fields */}
       {field.type === "nested" && (
         <SchemaBuilder
           fields={field.nestedFields || []}
           setFields={handleNestedChange}
+          isRoot={false}
         />
       )}
     </div>
   );
 };
 
-// Main SchemaBuilder component
 const SchemaBuilder = ({ fields, setFields }: SchemaBuilderProps) => {
   const addField = () => {
     setFields([...fields, { ...defaultField }]);
@@ -108,21 +108,8 @@ const SchemaBuilder = ({ fields, setFields }: SchemaBuilderProps) => {
     setFields(newFields);
   };
 
-  const generateSchema = (fields: SchemaField[]) => {
-    const schema: Record<string, any> = {};
-    fields.forEach((field) => {
-      if (field.type === "nested" && field.nestedFields) {
-        schema[field.name] = generateSchema(field.nestedFields);
-      } else {
-        schema[field.name] = field.type.toUpperCase();
-      }
-    });
-    return schema;
-  };
-
   return (
     <div className="p-4">
-      {/* Render all field rows */}
       {fields.map((field, index) => (
         <FieldRow
           key={index}
@@ -132,7 +119,6 @@ const SchemaBuilder = ({ fields, setFields }: SchemaBuilderProps) => {
         />
       ))}
 
-      {/* Add Item Button */}
       <button
         onClick={addField}
         type="button"
@@ -140,23 +126,21 @@ const SchemaBuilder = ({ fields, setFields }: SchemaBuilderProps) => {
       >
         + Add Item
       </button>
-
-      {/* Submit Button */}
-      <button
-        type="submit"
-        className="mt-4 bg-green-600 text-white px-6 py-2 rounded hover:bg-green-700 transition"
-      >
-        Submit
-      </button>
-
-      {/* Schema JSON Output */}
-      <div className="bg-gray-100 p-4 mt-6 rounded shadow-md text-left overflow-x-auto">
-        <pre className="whitespace-pre-wrap break-all">
-          {JSON.stringify(generateSchema(fields), null, 2)}
-        </pre>
-      </div>
     </div>
   );
+};
+
+// ✅ Export schema generator
+export const generateSchema = (fields: SchemaField[]): Record<string, any> => {
+  const schema: Record<string, any> = {};
+  fields.forEach((field) => {
+    if (field.type === "nested" && field.nestedFields) {
+      schema[field.name] = generateSchema(field.nestedFields);
+    } else {
+      schema[field.name] = field.type.toUpperCase();
+    }
+  });
+  return schema;
 };
 
 export default SchemaBuilder;
