@@ -144,3 +144,4 @@ export const generateSchema = (fields: SchemaField[]): Record<string, any> => {
 };
 
 export default SchemaBuilder;
+
